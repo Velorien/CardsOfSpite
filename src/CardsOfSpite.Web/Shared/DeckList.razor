@@ -1,0 +1,50 @@
+﻿@using CardsOfSpite.Models
+@inject HttpClient Http
+
+<div class="deckList box">
+    @if (_loading) {
+
+    } else if (_deckGroups is not null) {
+        <h2>Decks</h2>
+        @foreach (var deckGroup in _deckGroups)
+        {
+            <h3>@deckGroup.Key</h3>
+            <div class="deckGroup">
+                @foreach(var deck in deckGroup)
+                {
+                    <div class="deck @(Settings.DeckIds.Contains(deck.Id) ? "selected" : null)" @onclick="() => DeckClicked(deck.Id)">
+                        <span>@deck.Name</span>
+                        <div class="deckInfo">
+                            <div class="cardIcon whiteCardIcon"></div>
+                            <span>x @deck.WhiteCount</span>
+                            <div class="cardIcon blackCardIcon"></div>
+                            <span>x @deck.BlackCount</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public Models.GameSettings Settings { get; set; } = null!;
+
+    IEnumerable<IGrouping<string, DeckInfo>>? _deckGroups;
+    bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var deckData = await Http.GetFromJsonAsync<IEnumerable<DeckInfo>>("/api/decks");
+        _deckGroups = deckData!.OrderByDescending(x => x.WhiteCount).GroupBy(x => x.Group);
+        _loading = false;
+    }
+
+    void DeckClicked(Guid deckId)
+    {
+        if (Settings.DeckIds.Contains(deckId))
+            Settings.DeckIds.Remove(deckId);
+        else
+            Settings.DeckIds.Add(deckId);
+    }
+}

@@ -1,0 +1,109 @@
+﻿@page "/Game/{gameId:guid}"
+
+@inject Services.GameService GameService
+@implements IAsyncDisposable
+
+<div class="game">
+    @if (GameService.ErrorMessage is not null)
+    {
+        <div class="box gameBox">
+            <h2>Whoops...</h2>
+            <p>An error has occurred: @GameService.ErrorMessage</p>
+        </div>
+    }
+    else if (!GameService.Joined)
+    {
+        <div class="box gameBox">
+            <h2>Join game</h2>
+            <label>Your name</label>
+            <input type="text" required @bind-value="_name" />
+            <button @onclick="Join">Join</button>
+        </div>
+    }
+    else if (GameService.Waiting)
+    {
+        <div class="waiting box gameBox">
+            <h2>Waiting for game</h2>
+            <div class="rotatingCard">
+                <div class="cardLine1"></div>
+                <div class="cardLine2"></div>
+            </div>
+            <div>
+                <p>In line:</p>
+                <span>@string.Join(", ", GameService.PlayerQueue.Select(p => p.Name))</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="board">
+            <div>
+                <h3>Current card</h3>
+                @if (GameService.BlackCard is not null)
+                {
+                    <div class="blackCard">
+                        <span>@GameService.BlackCard.Text</span>
+                        <div class="pick">@GameService.BlackCard.Pick</div>
+                    </div>
+                }
+                <h3>Players</h3>
+                @foreach (var player in GameService.Players)
+                {
+                    bool isCzar = GameService.CzarId == player.Id;
+                    <p class="@(isCzar ? "czar" : null)">
+                        @(isCzar ? "👑 " : null) @player.Name (@player.Points)
+                        @(player.Id == GameService.PlayerId ? "(you!)" : null)
+                    </p>
+                }
+
+                @if (GameService.WinningSet is not null)
+                {
+                    var ws = GameService.WinningSet;
+                    <h3>Winning set</h3>
+                    <div class="blackCard">
+                        <span>@ws.BlackCard.Text</span>
+                        <div class="pick">@ws.BlackCard.Pick</div>
+                    </div>
+                    <div>
+                        @foreach (var card in ws.WhiteCards)
+                        {
+                            <div class="whiteCard">
+                                <span>@card.Text</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+            <div class="cardArea">
+                <div class="playArea">
+                </div>
+                <div class="hand @(GameService.IsCzar ? "czarHand" : null)">
+                    @foreach (var card in GameService.Hand)
+                    {
+                        <div class="whiteCard">
+                            <span>@card.Text</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    string _name = string.Empty;
+    [Parameter] public Guid GameId { get; set; }
+
+    public ValueTask DisposeAsync() => GameService.DisposeAsync();
+
+    protected override void OnInitialized()
+    {
+        GameService.StateChanged += StateHasChanged;
+    }
+
+    Task Join()
+    {
+        if (string.IsNullOrWhiteSpace(_name)) return Task.CompletedTask;
+        return GameService.Join(GameId, _name);
+    }
+}

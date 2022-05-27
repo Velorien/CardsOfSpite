@@ -1,0 +1,101 @@
+﻿.game {
+    display: grid;
+    height: 100%;
+}
+
+.gameBox {
+    align-self: center;
+    justify-self: center;
+}
+
+.waiting {
+    display: grid;
+}
+
+@keyframes rotating {
+    from { transform: rotate(0) }
+    to { transform: rotate(360deg) }
+}
+
+.rotatingCard {
+    justify-self: center;
+    margin: 20px;
+    padding: 10px;
+    background-color: var(--white);
+    border-radius: 10px;
+    height: 100px;
+    width: 100px;
+    animation: rotating 1s ease infinite
+}
+
+.rotatingCard .cardLine1 {
+    background-color: var(--black);
+    height: 10px;
+    margin-bottom: 10px;
+}
+
+    .rotatingCard .cardLine2 {
+        background-color: var(--black);
+        height: 10px;
+        width: 50%;
+    }
+
+.board {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    padding: 20px;
+}
+
+.czar {
+    font-weight: bold;
+}
+
+.cardArea {
+    display: flex;
+    flex-direction: column;
+}
+
+.playArea {
+    flex: 1 0 auto;
+}
+
+.hand {
+    flex: 0 1 auto;
+    display: flex;
+    column-gap: 10px;
+}
+
+.whiteCard {
+    border: 2px dashed var(--white);
+    color: var(--black);
+    height: 150px;
+    width: 150px;
+    background-color: var(--white);
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.blackCard {
+    display: flex;
+    flex-direction: column;
+    height: 200px;
+    width: 200px;
+    color: var(--white);
+    background-color: var(--black);
+    border-radius: 10px;
+    padding: 10px;
+    justify-content: space-between;
+    font-weight: bold;
+}
+
+.blackCard .pick {
+    background-color: var(--white);
+    color: var(--black);
+    height: 20px;
+    width: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    align-self: end;
+}

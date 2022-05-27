@@ -1,0 +1,18 @@
+﻿@page "/"
+@using CardsOfSpite.Web.Models
+
+<div class="homeContainer">
+    <div>
+        <div class="logo box">
+            <p class="logoLarge">Cards</p>
+            <p class="logoSmall">of</p>
+            <p class="logoLarge">Spite</p>
+        </div>
+        <GameConfiguration Settings="_settings" />
+    </div>
+    <DeckList Settings="_settings" />
+</div>
+
+@code {
+    GameSettings _settings = new();
+}
