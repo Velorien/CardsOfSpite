@@ -1,0 +1,15 @@
+﻿.whiteCard {
+    flex-shrink: 0;
+    box-shadow: black 2px 2px 5px;
+    user-select: none;
+    color: var(--black);
+    height: 150px;
+    width: 150px;
+    background-color: var(--white);
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.whiteCard.selected {
+    opacity: 0.5;
+}

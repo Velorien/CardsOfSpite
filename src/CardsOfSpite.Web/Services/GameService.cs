@@ -10,12 +10,14 @@ namespace CardsOfSpite.Web.Services;
 public class GameService : IGameHubClient, IAsyncDisposable
 {
     private readonly HubConnection _connection;
+    private Guid _gameId;
 
     public event Action StateChanged = null!;
 
     public bool Joined { get; private set; }
     public bool Waiting { get; private set; } = true;
     public bool CardsRevealed { get; private set; }
+    public bool IsGameEnded { get; private set; }
     public string CzarId { get; private set; } = null!;
     public BlackCard? BlackCard { get; private set; }
     public string PlayerId { get; private set; } = null!;
@@ -25,6 +27,8 @@ public class GameService : IGameHubClient, IAsyncDisposable
     public IEnumerable<PlayerInfo> PlayerQueue { get; private set; } = Enumerable.Empty<PlayerInfo>();
     public WinningSet? WinningSet { get; private set; }
     public Dictionary<string, List<WhiteCard>> SelectedCards { get; } = new();
+    public List<WhiteCard> CurrentSelection { get; } = new();
+    public bool CanSelectCards => BlackCard is not null && !CardsRevealed && !IsCzar && !SelectedCards.ContainsKey(PlayerId);
 
     public bool IsCzar => PlayerId == CzarId;
 
@@ -37,23 +41,17 @@ public class GameService : IGameHubClient, IAsyncDisposable
         var hubMethods = typeof(IGameHubClient).GetMethods();
         
         _connection.On<WaitingForPlayersMessage>(nameof(WaitingForPlayers), WaitingForPlayers);
+        _connection.On<PlayerLeftQueueMessage>(nameof(PlayerLeftQueue), PlayerLeftQueue);
+        _connection.On<PlayerLeftGameMessage>(nameof(PlayerLeftGame), PlayerLeftGame);
         _connection.On<WinnerSelectedMessage>(nameof(WinnerSelected), WinnerSelected);
         _connection.On<CardsSelectedMessage>(nameof(CardsSelected), CardsSelected);
         _connection.On<PlayerJoinedMessage>(nameof(PlayerJoined), PlayerJoined);
         _connection.On<RoundStartedMessage>(nameof(RoundStarted), RoundStarted);
-        _connection.On<PlayerLeftQueueMessage>(nameof(PlayerLeftQueue), PlayerLeftQueue);
-        _connection.On<PlayerLeftGameMessage>(nameof(PlayerLeftGame), PlayerLeftGame);
+        _connection.On<RevealCardsMessage>(nameof(RevealCards), RevealCards);
         _connection.On<GameEndedMessage>(nameof(GameEnded), GameEnded);
         _connection.On<HandSetMessage>(nameof(HandSet), HandSet);
         _connection.On<string>(nameof(Error), Error);
         //_connection.Reconnected += (id) => { PlayerId = id!; return Task.CompletedTask; };
-    }
-
-    public async Task Join(Guid gameId, string name)
-    {
-        await _connection.StartAsync();
-        PlayerId = _connection.ConnectionId!;
-        Joined = await _connection.InvokeAsync<bool>("JoinGame", gameId, name);
     }
 
     public ValueTask DisposeAsync()
@@ -65,6 +63,8 @@ public class GameService : IGameHubClient, IAsyncDisposable
 
     public Task CardsSelected(CardsSelectedMessage message)
     {
+        SelectedCards[message.PlayerId] = message.Cards;
+        if (message.PlayerId == PlayerId) CurrentSelection.Clear();
         StateChanged.Invoke();
         return Task.CompletedTask;
     }
@@ -77,7 +77,10 @@ public class GameService : IGameHubClient, IAsyncDisposable
 
     public Task GameEnded(GameEndedMessage message)
     {
-        throw new NotImplementedException();
+        WinningSet = new(message.Name, message.BlackCard, message.WhiteCards);
+        IsGameEnded = true;
+        StateChanged.Invoke();
+        return Task.CompletedTask;
     }
 
     public Task HandSet(HandSetMessage message)
@@ -117,6 +120,8 @@ public class GameService : IGameHubClient, IAsyncDisposable
         CzarId = message.CzarId;
         Players = message.Players;
         PlayerQueue = Enumerable.Empty<PlayerInfo>();
+        SelectedCards.Clear();
+        CurrentSelection.Clear();
         StateChanged.Invoke();
         return Task.CompletedTask;
     }
@@ -143,4 +148,18 @@ public class GameService : IGameHubClient, IAsyncDisposable
         StateChanged.Invoke();
         return Task.CompletedTask;
     }
+
+    public async Task Join(Guid gameId, string name)
+    {
+        await _connection.StartAsync();
+        PlayerId = _connection.ConnectionId!;
+        Joined = await _connection.InvokeAsync<bool>("JoinGame", gameId, name);
+        _gameId = gameId;
+    }
+
+    public Task ConfirmSelection() =>
+        _connection.InvokeAsync("SelectCards", _gameId, CurrentSelection.Select(x => x.Id));
+
+    public Task SelectWinner(string playerId) =>
+        _connection.InvokeAsync("SelectWinner", _gameId, playerId);
 }

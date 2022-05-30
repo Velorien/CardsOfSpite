@@ -42,60 +42,62 @@
 
 .board {
     display: grid;
-    grid-template-columns: 200px 1fr;
+    grid-template-columns: 230px 1fr;
     padding: 20px;
+    column-gap: 20px;
+    height: 100%;
+    overflow-y: hidden;
+}
+
+.gameStatus {
+    padding-right: 20px;
+    height: 100%;
+    overflow-y: scroll;
 }
 
 .czar {
     font-weight: bold;
 }
 
+.selection {
+    display: flex;
+    column-gap: 10px;
+}
+
+.selection:hover .cardWrapper {
+    opacity: 0.9;
+}
+
 .cardArea {
     display: flex;
+    overflow: hidden;
     flex-direction: column;
 }
 
 .playArea {
     flex: 1 0 auto;
+    display: flex;
+    column-gap: 20px;
+    align-items: start;
+    overflow-x: auto;
+    width: 100%;
+}
+
+.playArea button {
+    margin-top: 20px;
+    width: 150px;
 }
 
 .hand {
     flex: 0 1 auto;
     display: flex;
     column-gap: 10px;
+    width: 100%;
+    padding-bottom: 20px;
+    overflow-x: scroll;
 }
 
-.whiteCard {
-    border: 2px dashed var(--white);
-    color: var(--black);
-    height: 150px;
-    width: 150px;
-    background-color: var(--white);
-    border-radius: 10px;
-    padding: 10px;
-}
-
-.blackCard {
-    display: flex;
-    flex-direction: column;
-    height: 200px;
-    width: 200px;
-    color: var(--white);
-    background-color: var(--black);
-    border-radius: 10px;
-    padding: 10px;
-    justify-content: space-between;
-    font-weight: bold;
-}
-
-.blackCard .pick {
-    background-color: var(--white);
-    color: var(--black);
-    height: 20px;
-    width: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 10px;
-    align-self: end;
+.disabled {
+    opacity: 0.5;
+    pointer-events: none;
 }

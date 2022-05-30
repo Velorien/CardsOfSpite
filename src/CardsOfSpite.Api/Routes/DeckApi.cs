@@ -13,32 +13,40 @@ public static class DeckApi
             .Produces<IEnumerable<DeckInfo>>();
 
         builder.MapPost("/api/decks", CreateDeck)
+            .RequireAuthorization()
             .Produces<DeckCreationResponse>()
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
         builder.MapDelete("/api/decks", DeleteDecks)
+            .RequireAuthorization()
             .Produces(StatusCodes.Status204NoContent);
 
         builder.MapPut("/api/decks/{deckId:Guid}", UpdateDeck)
+            .RequireAuthorization()
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
         builder.MapDelete("/api/decks/{deckId:Guid}", DeleteDeck)
+            .RequireAuthorization()
             .Produces(StatusCodes.Status204NoContent);
 
         builder.MapPost("/api/decks/{deckId:Guid}/white", AddWhiteCard)
+            .RequireAuthorization()
             .Produces<WhiteCardCreationResponse>()
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
         builder.MapPost("/api/decks/{deckId:Guid}/black", AddBlackCard)
+            .RequireAuthorization()
             .Produces<BlackCardCreationResponse>()
             .ProducesProblem(StatusCodes.Status400BadRequest);
         
         builder.MapDelete("/api/decks/{deckId:Guid}/white/{cardId:Guid}", DeleteWhiteCard)
+            .RequireAuthorization()
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
         builder.MapDelete("/api/decks/{deckId:Guid}/black/{cardId:Guid}", DeleteBlackCard)
+            .RequireAuthorization()
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 

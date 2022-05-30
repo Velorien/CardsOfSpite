@@ -26,29 +26,36 @@ html, body, #app {
 .homeContainer {
     display: grid;
     height: 100%;
-    grid-template-columns: calc(20vw + 20px) 2fr;
+    column-gap: 20px;
+    grid-template-columns: 300px 2fr;
+    padding: 20px;
 }
 
-    .homeContainer .logo {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        margin-left: 20px;
-        margin-top: 20px;
-        padding-left: 3.5vw;
-        height: 20vw;
-        width: 20vw;
-    }
+.loading {
+    display: grid;
+    height: 100%;
+    align-content: center;
+    justify-items: center;
+}
 
-        .homeContainer .logo .logoLarge {
-            font-size: 4vw;
-            margin: 0;
-        }
+.logo {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-left: 50px;
+    height: 300px;
+    width: 300px;
+}
 
-        .homeContainer .logo .logoSmall {
-            font-size: 2vw;
-            margin: 0;
-        }
+.logo .logoLarge {
+    font-size: 70px;
+    margin: 0;
+}
+
+.logo .logoSmall {
+    font-size: 35px;
+    margin: 0;
+}
 
 input[type=number], input[type=text] {
     border-radius: 5px;
@@ -68,7 +75,7 @@ button {
     background-color: var(--bg);
     color: var(--white);
     height: 40px;
-    width: 100%;
+    min-width: 120px;
 }
 
 #blazor-error-ui {
@@ -99,3 +106,42 @@ button {
     .blazor-error-boundary::after {
         content: "An error has occurred."
     }
+
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--white) var(--black);
+}
+
+    /* Chrome, Edge and Safari */
+    *::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    *::-webkit-scrollbar-track {
+        border-radius: 5px;
+        background-color: var(--black);
+    }
+
+        *::-webkit-scrollbar-track:hover {
+            background-color: var(--black);
+        }
+
+        *::-webkit-scrollbar-track:active {
+            background-color: var(--black);
+        }
+
+    *::-webkit-scrollbar-thumb {
+        border-radius: 5px;
+        background-color: var(--white);
+    }
+
+        *::-webkit-scrollbar-thumb:hover {
+            background-color: var(--white);
+        }
+
+        *::-webkit-scrollbar-thumb:active {
+            background-color: var(--white);
+        }

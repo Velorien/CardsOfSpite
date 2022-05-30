@@ -1,0 +1,15 @@
+﻿@using CardsOfSpite.Web.Models
+
+<p>Winner: @WinningSet.PlayerName</p>
+<div class="winningSet">
+    <BlackCardView Card="WinningSet.BlackCard" />
+    @foreach (var card in WinningSet.WhiteCards)
+    {
+        <WhiteCardView Card="card" />
+    }
+</div>
+
+@code {
+    [Parameter] public WinningSet WinningSet { get; set; } = null!;
+    [Parameter] public bool HorizontalLayout { get; set; }
+}

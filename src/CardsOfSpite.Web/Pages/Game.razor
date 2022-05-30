@@ -1,5 +1,6 @@
 ﻿@page "/Game/{gameId:guid}"
 
+@using CardsOfSpite.Models
 @inject Services.GameService GameService
 @implements IAsyncDisposable
 
@@ -16,7 +17,7 @@
         <div class="box gameBox">
             <h2>Join game</h2>
             <label>Your name</label>
-            <input type="text" required @bind-value="_name" />
+            <input type="text" required @bind-value="_name" maxlength="15"/>
             <button @onclick="Join">Join</button>
         </div>
     }
@@ -29,60 +30,93 @@
                 <div class="cardLine2"></div>
             </div>
             <div>
-                <p>In line:</p>
+                <p>In queue:</p>
                 <span>@string.Join(", ", GameService.PlayerQueue.Select(p => p.Name))</span>
             </div>
+        </div>
+    }
+    else if (GameService.IsGameEnded)
+    {
+        <div class="box gameBox">
+            <h2>Game ended</h2>
+            <WinningSetView WinningSet="GameService.WinningSet" />
         </div>
     }
     else
     {
         <div class="board">
-            <div>
+            <div class="gameStatus">
                 <h3>Current card</h3>
                 @if (GameService.BlackCard is not null)
                 {
-                    <div class="blackCard">
-                        <span>@GameService.BlackCard.Text</span>
-                        <div class="pick">@GameService.BlackCard.Pick</div>
-                    </div>
+                    <BlackCardView Card="GameService.BlackCard" />
                 }
                 <h3>Players</h3>
                 @foreach (var player in GameService.Players)
                 {
                     bool isCzar = GameService.CzarId == player.Id;
                     <p class="@(isCzar ? "czar" : null)">
-                        @(isCzar ? "👑 " : null) @player.Name (@player.Points)
+                        @(isCzar ? "👑 " : null)
+                        @(GameService.SelectedCards.ContainsKey(player.Id) ? "✅ " : null)
+                        @player.Name (@player.Points)
                         @(player.Id == GameService.PlayerId ? "(you!)" : null)
                     </p>
                 }
 
                 @if (GameService.WinningSet is not null)
                 {
-                    var ws = GameService.WinningSet;
                     <h3>Winning set</h3>
-                    <div class="blackCard">
-                        <span>@ws.BlackCard.Text</span>
-                        <div class="pick">@ws.BlackCard.Pick</div>
-                    </div>
-                    <div>
-                        @foreach (var card in ws.WhiteCards)
-                        {
-                            <div class="whiteCard">
-                                <span>@card.Text</span>
-                            </div>
-                        }
-                    </div>
+                    <WinningSetView WinningSet="GameService.WinningSet" />
                 }
             </div>
             <div class="cardArea">
+                <h3>Selected cards</h3>
                 <div class="playArea">
+                    @if (GameService.SelectedCards.Any())
+                    {
+                        foreach (var selection in GameService.SelectedCards)
+                        {
+                            <div>
+                                <div class="selection">
+                                    @foreach (var card in selection.Value)
+                                    {
+                                        <div class="cardWrapper">
+                                            <WhiteCardView Card="card" RevealTtext="GameService.CardsRevealed" />
+                                        </div>
+                                    }
+
+                                </div>
+                                @if (GameService.CardsRevealed && GameService.IsCzar)
+                                {
+                                    <button @onclick="() => GameService.SelectWinner(selection.Key)">Award point</button>
+                                }
+                            </div>
+                        }
+                    }
                 </div>
-                <div class="hand @(GameService.IsCzar ? "czarHand" : null)">
+
+                <PlayerMessage />
+
+                @if (GameService.CurrentSelection.Any())
+                {
+                    <h3>Your selection</h3>
+                    <div class="hand">
+                        @foreach (var card in GameService.CurrentSelection)
+                        {
+                            <WhiteCardView Card="card" OnClick="CardClicked" />
+                        }
+                        @if (GameService.CurrentSelection.Count == GameService.BlackCard!.Pick)
+                        {
+                            <button @onclick="GameService.ConfirmSelection">Confirm selection</button>
+                        }
+                    </div>
+                }
+                <h3>Your hand</h3>
+                <div class="hand @GetHandClass()">
                     @foreach (var card in GameService.Hand)
                     {
-                        <div class="whiteCard">
-                            <span>@card.Text</span>
-                        </div>
+                        <WhiteCardView Card="card" OnClick="CardClicked"
+                            CssClass="@(GameService.CurrentSelection.Contains(card) ? "selected" : null)" />
                     }
                 </div>
             </div>
@@ -101,9 +135,21 @@
         GameService.StateChanged += StateHasChanged;
     }
 
+    string? GetHandClass() => GameService.IsCzar || !GameService.CardsRevealed && !GameService.CanSelectCards || GameService.CardsRevealed
+    ? "disabled" : null;
+
     Task Join()
     {
         if (string.IsNullOrWhiteSpace(_name)) return Task.CompletedTask;
         return GameService.Join(GameId, _name);
+    }
+
+    void CardClicked(WhiteCard card)
+    {
+        if (!GameService.CanSelectCards) return;
+
+        var cs = GameService.CurrentSelection;
+        if (cs.Contains(card)) cs.Remove(card);
+        else if (cs.Count < GameService.BlackCard!.Pick) cs.Add(card);
     }
 }

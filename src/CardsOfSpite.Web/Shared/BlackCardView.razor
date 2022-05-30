@@ -1,0 +1,10 @@
+﻿@using CardsOfSpite.Models
+
+<div class="blackCard">
+    <span>@((MarkupString)Card.Text)</span>
+    <div class="pick">@Card.Pick</div>
+</div>
+
+@code {
+    [Parameter] public BlackCard Card { get; set; } = null!;
+}

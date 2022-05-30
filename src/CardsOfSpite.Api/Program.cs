@@ -1,3 +1,4 @@
+using CardsOfSpite.Api.Handlers;
 using CardsOfSpite.Api.Hubs;
 using CardsOfSpite.Api.Routes;
 using CardsOfSpite.Api.Services;
@@ -23,6 +24,9 @@ builder.Services.AddResponseCompression(o =>
     o.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[] { "application/octet-stream" });
 });
 
+builder.Services.AddAuthentication("ApiKey")
+    .AddScheme<ApiKeyOptions, ApiKeyHandler>("ApiKey", o => builder.Configuration.GetSection("ApiKeyOptions").Bind(o));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -32,6 +36,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
 app.UseRouting();
 
 app.UseCors(builder => builder
@@ -39,6 +44,7 @@ app.UseCors(builder => builder
     .AllowAnyOrigin()
     .AllowAnyMethod());
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapDeckApi();

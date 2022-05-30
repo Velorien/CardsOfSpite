@@ -96,10 +96,10 @@ internal class GameGrain : Grain, IGame
 
         if (_players.TryGetValue(playerId, out var player))
         {
-            await SendMessage(new PlayerLeftGameMessage(_gameId, playerId, GetPlayerInfo()));
             _whiteDiscardPile.AddRange(player.Hand);
             _czarQueue.Remove(playerId);
             _players.Remove(playerId);
+            await SendMessage(new PlayerLeftGameMessage(_gameId, playerId, GetPlayerInfo()));
 
             if (playerId != _czarId)
             {
@@ -131,8 +131,15 @@ internal class GameGrain : Grain, IGame
     public async Task<bool> SelectCards(string playerId, List<Guid> cardIds)
     {
         if (cardIds.Count != _currentBlackCard!.Pick) return false;
-        _selectedCards[playerId] = cardIds.Select(id => _players[playerId].Hand.First(card => card.Id == id)).ToList();
-        await SendMessage(new CardsSelectedMessage(_gameId, playerId));
+        _selectedCards[playerId] = new();
+        foreach (var id in cardIds)
+        {
+            var card = _players[playerId].Hand.First(card => card.Id == id);
+            _players[playerId].Hand.Remove(card);
+            _selectedCards[playerId].Add(card);
+        }
+
+        await SendMessage(new CardsSelectedMessage(_gameId, playerId, _selectedCards[playerId]));
         if (_selectedCards.Count == _players.Count - 1)
             await SendMessage(new RevealCardsMessage(_gameId));
 
@@ -159,12 +166,10 @@ internal class GameGrain : Grain, IGame
         _blackDiscardPile.Add(_currentBlackCard!);
         foreach (var selection in _selectedCards)
         {
-            foreach (var card in selection.Value)
-            {
-                _players[selection.Key].Hand.Remove(card);
-                _whiteDiscardPile.Add(card);
-            }
+            _whiteDiscardPile.AddRange(selection.Value);
         }
+
+        await StartNextRound();
     }
 
     private async Task StartNextRound()
@@ -197,7 +202,7 @@ internal class GameGrain : Grain, IGame
         // select next czar
         _czarId = _czarId is null
             ? _players.Keys.First()
-            : _czarQueue[_czarQueue.IndexOf(_czarId) + 1 % _czarQueue.Count];
+            : _czarQueue[(_czarQueue.IndexOf(_czarId) + 1) % _czarQueue.Count];
 
         DrawBlackCard();
         await SendMessage(new RoundStartedMessage(
@@ -215,7 +220,7 @@ internal class GameGrain : Grain, IGame
             _whiteDiscardPile.Clear();
         }
 
-        var draw = _whiteCards.Take(count);
+        var draw = _whiteCards.Take(count).ToList();
         _whiteCards.RemoveRange(0, count);
 
         return draw;

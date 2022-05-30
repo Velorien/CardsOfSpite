@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CardsOfSpite.Models", "src\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CardsOfSpite.Api", "src\CardsOfSpite.Api\CardsOfSpite.Api.csproj", "{0FFF7E5B-198A-4DCF-8FE8-14DD779A6985}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardsOfSpite.HubClient", "src\CardsOfSpite.HubClient\CardsOfSpite.HubClient.csproj", "{AC68AAB4-CE0F-4AD5-A49F-D8AC7ABCAAE1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CardsOfSpite.HubClient", "src\CardsOfSpite.HubClient\CardsOfSpite.HubClient.csproj", "{AC68AAB4-CE0F-4AD5-A49F-D8AC7ABCAAE1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -10,7 +10,7 @@ public record PlayerLeftGameMessage(Guid GameId, string PlayerId, List<PlayerInf
 
 public record PlayerLeftQueueMessage(Guid GameId, List<PlayerInfo> Players) : Message(GameId);
 
-public record CardsSelectedMessage(Guid GameId, string PlayerId) : Message(GameId);
+public record CardsSelectedMessage(Guid GameId, string PlayerId, List<WhiteCard> Cards) : Message(GameId);
 
 public record RevealCardsMessage(Guid GameId) : Message(GameId);
 

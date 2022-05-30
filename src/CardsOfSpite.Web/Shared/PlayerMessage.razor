@@ -1,0 +1,29 @@
+﻿@inject Services.GameService GameService
+
+@if (GameService.IsCzar && GameService.CardsRevealed)
+{
+    <h2>Select the winner, oh mighty czar!</h2>
+}
+else if (GameService.IsCzar)
+{
+    <h2>You are the czar. Wait for the other players to select their cards.</h2>
+}
+else if (GameService.CanSelectCards)
+{
+    <h2>Select your cards. You need to select @GameService.BlackCard!.Pick this round.</h2>
+}
+else if (!GameService.CardsRevealed && !GameService.CanSelectCards)
+{
+    <h2>You've selected your cards. Wait for the other players to select theirs.</h2>
+}
+else if (GameService.CardsRevealed)
+{
+    <h2>The czar is selecting the winner.</h2>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        GameService.StateChanged += StateHasChanged;
+    }
+}

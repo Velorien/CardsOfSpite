@@ -1,0 +1,14 @@
+﻿@using CardsOfSpite.Models
+<div class="whiteCard @CssClass" @onclick="() => OnClick.InvokeAsync(Card)">
+    @if (RevealTtext)
+    {
+        <span>@Card.Text</span>
+    }
+</div>
+
+@code {
+    [Parameter] public WhiteCard Card { get; set; } = null!;
+    [Parameter] public string? CssClass{ get; set; }
+    [Parameter] public bool RevealTtext { get; set; } = true;
+    [Parameter] public EventCallback<WhiteCard> OnClick { get; set; }
+}
