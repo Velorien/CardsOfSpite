@@ -1,0 +1,15 @@
+﻿<div class="toggle" @onclick="ToggleClicked">
+    <div class="toggleSwitch @(Toggled ? "toggled" : null)"></div>
+</div>
+
+@code {
+    [Parameter] public bool Toggled { get; set; }
+
+    [Parameter] public EventCallback<bool> ToggledChanged { get; set; }
+
+    async Task ToggleClicked()
+    {
+        Toggled = !Toggled;
+        await ToggledChanged.InvokeAsync(Toggled);
+    }
+}

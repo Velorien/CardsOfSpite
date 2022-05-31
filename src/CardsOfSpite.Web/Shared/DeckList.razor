@@ -1,4 +1,5 @@
 ﻿@using CardsOfSpite.Models
+@using CardsOfSpite.Web.Models
 @inject HttpClient Http
 
 <div class="deckList box">
@@ -12,7 +13,7 @@
             <div class="deckGroup">
                 @foreach(var deck in deckGroup)
                 {
-                    <div class="deck @(Settings.DeckIds.Contains(deck.Id) ? "selected" : null)" @onclick="() => DeckClicked(deck.Id)">
+                    <div class="deck @(Configuration.DeckIds.Contains(deck.Id) ? "selected" : null)" @onclick="() => DeckClicked(deck.Id)">
                         <span>@deck.Name</span>
                         <div class="deckInfo">
                             <div class="cardIcon whiteCardIcon"></div>
@@ -28,7 +29,7 @@
 </div>
 
 @code {
-    [Parameter] public Models.GameSettings Settings { get; set; } = null!;
+    [Parameter] public GameConfigurationViewModel Configuration { get; set; } = null!;
 
     IEnumerable<IGrouping<string, DeckInfo>>? _deckGroups;
     bool _loading = true;
@@ -42,9 +43,9 @@
 
     void DeckClicked(Guid deckId)
     {
-        if (Settings.DeckIds.Contains(deckId))
-            Settings.DeckIds.Remove(deckId);
+        if (Configuration.DeckIds.Contains(deckId))
+            Configuration.DeckIds.Remove(deckId);
         else
-            Settings.DeckIds.Add(deckId);
+            Configuration.DeckIds.Add(deckId);
     }
 }

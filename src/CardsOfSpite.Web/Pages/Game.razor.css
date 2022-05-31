@@ -55,6 +55,11 @@
     overflow-y: scroll;
 }
 
+.gameStatus button {
+    margin-top: 20px;
+    width: 100%;
+}
+
 .czar {
     font-weight: bold;
 }

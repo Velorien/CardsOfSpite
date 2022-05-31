@@ -8,11 +8,11 @@
             <p class="logoSmall">of</p>
             <p class="logoLarge">Spite</p>
         </div>
-        <GameConfiguration Settings="_settings" />
+        <GameConfiguration Configuration="_config" />
     </div>
-    <DeckList Settings="_settings" />
+    <DeckList Configuration="_config" />
 </div>
 
 @code {
-    GameSettings _settings = new();
+    GameConfigurationViewModel _config = new();
 }

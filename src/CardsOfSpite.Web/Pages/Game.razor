@@ -51,6 +51,10 @@
                 {
                     <BlackCardView Card="GameService.BlackCard" />
                 }
+                @if(GameService.Settings!.AllowDiscard)
+                {
+                    <button disabled="@(GameService.CurrentPlayer.Points == 0)" @onclick="GameService.DiscardHand">Discard hand</button>
+                }
                 <h3>Players</h3>
                 @foreach (var player in GameService.Players)
                 {

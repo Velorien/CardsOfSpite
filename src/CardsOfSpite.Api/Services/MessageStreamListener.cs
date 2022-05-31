@@ -36,6 +36,7 @@ public class MessageStreamListener : IHostedService, IAsyncObserver<Message>
             PlayerLeftQueueMessage m => target.PlayerLeftQueue(m),
             PlayerLeftGameMessage m => target.PlayerLeftGame(m),
             WinnerSelectedMessage m => target.WinnerSelected(m),
+            HandDiscardedMessage m => target.HandDiscarded(m),
             CardsSelectedMessage m => target.CardsSelected(m),
             RoundStartedMessage m => target.RoundStarted(m),
             PlayerJoinedMessage m => target.PlayerJoined(m),

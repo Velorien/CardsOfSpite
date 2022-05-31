@@ -36,7 +36,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
 app.UseRouting();
 
 app.UseCors(builder => builder
@@ -44,12 +43,18 @@ app.UseCors(builder => builder
     .AllowAnyOrigin()
     .AllowAnyMethod());
 
-app.UseAuthentication();
 app.UseAuthorization();
+app.UseAuthentication();
 
-app.MapDeckApi();
-app.MapGameApi();
+app.UseBlazorFrameworkFiles();
+app.UseStaticFiles();
 
-app.MapHub<GameHub>("/gamehub");
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapDeckApi();
+    endpoints.MapGameApi();
+    endpoints.MapHub<GameHub>("/gamehub");
+    endpoints.MapFallbackToFile("index.html");
+});
 
 app.Run();

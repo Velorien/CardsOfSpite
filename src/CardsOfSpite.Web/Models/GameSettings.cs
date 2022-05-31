@@ -2,7 +2,7 @@
 
 namespace CardsOfSpite.Web.Models;
 
-public class GameSettings
+public class GameConfigurationViewModel
 {
     public HashSet<Guid> DeckIds { get; } = new();
     public bool AllowDiscard { get; set; }

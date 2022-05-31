@@ -1,4 +1,5 @@
 ﻿using CardsOfSpite.GrainInterfaces;
+using CardsOfSpite.GrainInterfaces.Models;
 using CardsOfSpite.Grains.StateModels;
 using CardsOfSpite.Models;
 using CardsOfSpite.Models.Messages;
@@ -25,7 +26,7 @@ internal class GameGrain : Grain, IGame
     private Guid _gameId;
     private string? _czarId;
     private BlackCard? _currentBlackCard;
-    private GameSettings? _settings;
+    private GameConfiguration? _config;
     private IAsyncStream<Message> _messageStream = null!;
 
     public override Task OnActivateAsync()
@@ -36,23 +37,25 @@ internal class GameGrain : Grain, IGame
 
     public async Task DiscardHand(string playerId)
     {
-        if (_settings is null) return;
+        if (_config is null) return;
 
-        if (_settings.AllowDiscard &&
+        if (_config.AllowDiscard &&
             !_selectedCards.ContainsKey(playerId) &&
             _players.TryGetValue(playerId, out var player) &&
             player.Points > 0)
         {
             _whiteDiscardPile.AddRange(player.Hand);
             player.Hand.Clear();
-            player.Hand.AddRange(DrawWhiteCards(_settings.HandSize));
+            player.Hand.AddRange(DrawWhiteCards(_config.HandSize));
+            player.Points--;
+            await SendMessage(new HandDiscardedMessage(_gameId, GetPlayerInfo()));
             await SendMessage(new HandSetMessage(_gameId, playerId, player.Hand));
         }
     }
 
-    public async Task<bool> Initialize(GameSettings settings)
+    public async Task<bool> Initialize(GameConfiguration configuration)
     {
-        var deckGrains = settings.DeckIds.Select(id => GrainFactory.GetGrain<IDeck>(id)).ToList();
+        var deckGrains = configuration.DeckIds.Select(id => GrainFactory.GetGrain<IDeck>(id)).ToList();
         var decks = await deckGrains
             .ToAsyncEnumerable()
             .SelectAwait(async deck => await deck.GetDeck())
@@ -62,16 +65,16 @@ internal class GameGrain : Grain, IGame
         _whiteCards.AddRange(decks.SelectMany(deck => deck!.WhiteCards).OrderBy(x => Random.Shared.Next()));
         _blackCards.AddRange(decks.SelectMany(deck => deck!.BlackCards).OrderBy(x => Random.Shared.Next()));
 
-        if (_whiteCards.Count < settings.MaxPlayers * settings.HandSize) return false;
+        if (_whiteCards.Count < configuration.MaxPlayers * configuration.HandSize) return false;
 
         _messageStream = GetStreamProvider("SMS").GetStream<Message>(this.GetPrimaryKey(), null);
-        _settings = settings;
+        _config = configuration;
         return true;
     }
 
     public async Task<bool> Join(string playerId, string name)
     {
-        if (_settings is null ||
+        if (_config is null ||
             _playerQueue.Any(x => x.Id == playerId) ||
             _players.ContainsKey(playerId))
         {
@@ -82,7 +85,7 @@ internal class GameGrain : Grain, IGame
         await SendMessage(new PlayerJoinedMessage(_gameId, GetPlayerQueueInfo()));
 
         // start new round when the min number of players is reached
-        if (!_players.Any() && _playerQueue.Count == _settings!.MinPlayers)
+        if (!_players.Any() && _playerQueue.Count == _config!.MinPlayers)
         {
             await StartNextRound();
         }
@@ -90,9 +93,13 @@ internal class GameGrain : Grain, IGame
         return true;
     }
 
+    public Task<GameSettings?> GetGameSettings() => _config is null
+        ? Task.FromResult<GameSettings?>(null)
+        : Task.FromResult<GameSettings?>(new GameSettings(_config.AllowDiscard));
+
     public async Task Leave(string playerId)
     {
-        if (_settings is null) return;
+        if (_config is null) return;
 
         if (_players.TryGetValue(playerId, out var player))
         {
@@ -110,7 +117,7 @@ internal class GameGrain : Grain, IGame
                 }
                 else if (_selectedCards.Count == _players.Count - 1)
                 {
-                    await SendMessage(new RevealCardsMessage(_gameId));
+                    await SendMessage(new RevealCardsMessage(_gameId, GetRevealedDisplayOrder()));
                 }
             }
         }
@@ -122,7 +129,7 @@ internal class GameGrain : Grain, IGame
             await SendMessage(new PlayerLeftQueueMessage(_gameId, GetPlayerQueueInfo()));
         }
 
-        if (_players.Count < _settings.MinPlayers || playerId == _czarId)
+        if (_players.Count < _config.MinPlayers || playerId == _czarId)
         {
             await StartNextRound();
         }
@@ -141,7 +148,7 @@ internal class GameGrain : Grain, IGame
 
         await SendMessage(new CardsSelectedMessage(_gameId, playerId, _selectedCards[playerId]));
         if (_selectedCards.Count == _players.Count - 1)
-            await SendMessage(new RevealCardsMessage(_gameId));
+            await SendMessage(new RevealCardsMessage(_gameId, GetRevealedDisplayOrder()));
 
         return true;
     }
@@ -151,7 +158,7 @@ internal class GameGrain : Grain, IGame
         if (!_players.ContainsKey(playerId)) return;
 
         _players[playerId].Points++;
-        if (_players[playerId].Points == _settings!.PointsToWin)
+        if (_players[playerId].Points == _config!.PointsToWin)
         {
             await SendMessage(new GameEndedMessage(
                 _gameId,
@@ -185,7 +192,7 @@ internal class GameGrain : Grain, IGame
 
         _playerQueue.Clear();
 
-        if (_players.Count < _settings!.MinPlayers)
+        if (_players.Count < _config!.MinPlayers)
         {
             _playerQueue.AddRange(_players.Values);
             _players.Clear();
@@ -195,7 +202,7 @@ internal class GameGrain : Grain, IGame
 
         foreach (var player in _players.Values)
         {
-            player.Hand.AddRange(DrawWhiteCards(_settings!.HandSize - player.Hand.Count));
+            player.Hand.AddRange(DrawWhiteCards(_config!.HandSize - player.Hand.Count));
             await SendMessage(new HandSetMessage(_gameId, player.Id, player.Hand));
         }
 
@@ -244,4 +251,7 @@ internal class GameGrain : Grain, IGame
 
     private List<PlayerInfo> GetPlayerInfo() =>
         _players.Values.Select(p => new PlayerInfo(p.Id, p.Name, p.Points)).ToList();
+
+    private List<string> GetRevealedDisplayOrder() =>
+        _players.Keys.OrderBy(x => Random.Shared.Next()).ToList();
 }

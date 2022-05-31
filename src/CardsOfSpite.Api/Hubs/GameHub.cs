@@ -1,5 +1,6 @@
 ﻿using CardsOfSpite.GrainInterfaces;
 using CardsOfSpite.HubClient;
+using CardsOfSpite.Models;
 using Microsoft.AspNetCore.SignalR;
 using Orleans;
 
@@ -11,34 +12,35 @@ public class GameHub : Hub<IGameHubClient>
 
     public GameHub(IClusterClient cluster) => _cluster = cluster;
 
-    public async Task<bool> JoinGame(Guid gameId, string name)
+    public async Task<GameSettings?> JoinGame(Guid gameId, string name)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, gameId.ToString());
-        bool success = await _cluster.GetGrain<IGame>(gameId).Join(Context.ConnectionId, name);
+        var game = _cluster.GetGrain<IGame>(gameId);
+        bool success = await game.Join(Context.ConnectionId, name);
         if (!success)
         {
             await Clients.Caller.Error("Failed to join the game");
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, gameId.ToString());
+            return null;
         }
         else
         {
             Context.Items["gameId"] = gameId;
         }
 
-        return success;
+        return await game.GetGameSettings();
     }
 
-    public async Task SelectCards(Guid gameId, List<Guid> cardsIds)
+    public async Task SelectCards(List<Guid> cardsIds)
     {
-        bool success = await _cluster.GetGrain<IGame>(gameId).SelectCards(Context.ConnectionId, cardsIds);
+        bool success = await _cluster.GetGrain<IGame>(GameId).SelectCards(Context.ConnectionId, cardsIds);
         if (!success) await Clients.Caller.Error("Failed to select cards");
     }
 
-    public Task SelectWinner(Guid gameId, string playerId) =>
-        _cluster.GetGrain<IGame>(gameId).SelectWinner(playerId);
+    public Task SelectWinner(string playerId) =>
+        _cluster.GetGrain<IGame>(GameId).SelectWinner(playerId);
 
-    public Task DiscardHand(Guid gameId, string playerId) =>
-        _cluster.GetGrain<IGame>(gameId).DiscardHand(playerId);
+    public Task DiscardHand() => _cluster.GetGrain<IGame>(GameId).DiscardHand(Context.ConnectionId);
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
@@ -48,4 +50,6 @@ public class GameHub : Hub<IGameHubClient>
             await _cluster.GetGrain<IGame>((Guid)gameId!).Leave(Context.ConnectionId);
         }
     }
+
+    private Guid GameId => (Guid)Context.Items["gameId"]!;
 }

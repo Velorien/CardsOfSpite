@@ -10,7 +10,6 @@ namespace CardsOfSpite.Web.Services;
 public class GameService : IGameHubClient, IAsyncDisposable
 {
     private readonly HubConnection _connection;
-    private Guid _gameId;
 
     public event Action StateChanged = null!;
 
@@ -18,6 +17,7 @@ public class GameService : IGameHubClient, IAsyncDisposable
     public bool Waiting { get; private set; } = true;
     public bool CardsRevealed { get; private set; }
     public bool IsGameEnded { get; private set; }
+    public CardsOfSpite.Models.GameSettings? Settings { get; private set; }
     public string CzarId { get; private set; } = null!;
     public BlackCard? BlackCard { get; private set; }
     public string PlayerId { get; private set; } = null!;
@@ -29,6 +29,7 @@ public class GameService : IGameHubClient, IAsyncDisposable
     public Dictionary<string, List<WhiteCard>> SelectedCards { get; } = new();
     public List<WhiteCard> CurrentSelection { get; } = new();
     public bool CanSelectCards => BlackCard is not null && !CardsRevealed && !IsCzar && !SelectedCards.ContainsKey(PlayerId);
+    public PlayerInfo CurrentPlayer => Players.First(x => x.Id == PlayerId);
 
     public bool IsCzar => PlayerId == CzarId;
 
@@ -39,11 +40,12 @@ public class GameService : IGameHubClient, IAsyncDisposable
             .Build();
 
         var hubMethods = typeof(IGameHubClient).GetMethods();
-        
+
         _connection.On<WaitingForPlayersMessage>(nameof(WaitingForPlayers), WaitingForPlayers);
         _connection.On<PlayerLeftQueueMessage>(nameof(PlayerLeftQueue), PlayerLeftQueue);
         _connection.On<PlayerLeftGameMessage>(nameof(PlayerLeftGame), PlayerLeftGame);
         _connection.On<WinnerSelectedMessage>(nameof(WinnerSelected), WinnerSelected);
+        _connection.On<HandDiscardedMessage>(nameof(HandDiscarded), HandDiscarded);
         _connection.On<CardsSelectedMessage>(nameof(CardsSelected), CardsSelected);
         _connection.On<PlayerJoinedMessage>(nameof(PlayerJoined), PlayerJoined);
         _connection.On<RoundStartedMessage>(nameof(RoundStarted), RoundStarted);
@@ -149,17 +151,27 @@ public class GameService : IGameHubClient, IAsyncDisposable
         return Task.CompletedTask;
     }
 
+    public Task HandDiscarded(HandDiscardedMessage message)
+    {
+        Players = message.Players;
+        StateChanged.Invoke();
+        return Task.CompletedTask;
+    }
+
     public async Task Join(Guid gameId, string name)
     {
         await _connection.StartAsync();
         PlayerId = _connection.ConnectionId!;
-        Joined = await _connection.InvokeAsync<bool>("JoinGame", gameId, name);
-        _gameId = gameId;
+        Settings = await _connection.InvokeAsync<GameSettings?>("JoinGame", gameId, name);
+        Joined = Settings is not null;
     }
 
     public Task ConfirmSelection() =>
-        _connection.InvokeAsync("SelectCards", _gameId, CurrentSelection.Select(x => x.Id));
+        _connection.InvokeAsync("SelectCards", CurrentSelection.Select(x => x.Id));
 
     public Task SelectWinner(string playerId) =>
-        _connection.InvokeAsync("SelectWinner", _gameId, playerId);
+        _connection.InvokeAsync("SelectWinner", playerId);
+
+    public Task DiscardHand() =>
+        _connection.InvokeAsync("DiscardHand");
 }

@@ -12,7 +12,7 @@ public record PlayerLeftQueueMessage(Guid GameId, List<PlayerInfo> Players) : Me
 
 public record CardsSelectedMessage(Guid GameId, string PlayerId, List<WhiteCard> Cards) : Message(GameId);
 
-public record RevealCardsMessage(Guid GameId) : Message(GameId);
+public record RevealCardsMessage(Guid GameId, List<string> DisplayOrder) : Message(GameId);
 
 public record WinnerSelectedMessage(
     Guid GameId,
@@ -38,3 +38,5 @@ public record RoundStartedMessage(
     List<PlayerInfo> Players) : Message(GameId);
 
 public record WaitingForPlayersMessage(Guid GameId, List<PlayerInfo> Players) : Message(GameId);
+
+public record HandDiscardedMessage(Guid GameId, List<PlayerInfo> Players) : Message(GameId);

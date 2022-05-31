@@ -15,4 +15,5 @@ public interface IGameHubClient
     Task HandSet(HandSetMessage message);
     Task RoundStarted(RoundStartedMessage message);
     Task WaitingForPlayers(WaitingForPlayersMessage message);
+    Task HandDiscarded(HandDiscardedMessage message);
 }
