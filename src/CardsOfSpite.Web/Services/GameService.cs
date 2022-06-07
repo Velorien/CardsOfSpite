@@ -4,6 +4,7 @@ using CardsOfSpite.Models.Messages;
 using CardsOfSpite.Web.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
+using System.Linq.Expressions;
 
 namespace CardsOfSpite.Web.Services;
 
@@ -36,23 +37,28 @@ public class GameService : IGameHubClient, IAsyncDisposable
     public GameService(NavigationManager navigation)
     {
         _connection = new HubConnectionBuilder()
-            .WithUrl("http://localhost:5001/gamehub")
+            .WithUrl(navigation.BaseUri + "gamehub")
             .Build();
 
         var hubMethods = typeof(IGameHubClient).GetMethods();
+        foreach (var method in hubMethods)
+        {
+            var parameterTypes = method.GetParameters().Select(x => x.ParameterType).ToArray();
+            _connection.On(method.Name, parameterTypes, (p, _) => (method!.Invoke(this, p) as Task)!, null!);
+        }
 
-        _connection.On<WaitingForPlayersMessage>(nameof(WaitingForPlayers), WaitingForPlayers);
-        _connection.On<PlayerLeftQueueMessage>(nameof(PlayerLeftQueue), PlayerLeftQueue);
-        _connection.On<PlayerLeftGameMessage>(nameof(PlayerLeftGame), PlayerLeftGame);
-        _connection.On<WinnerSelectedMessage>(nameof(WinnerSelected), WinnerSelected);
-        _connection.On<HandDiscardedMessage>(nameof(HandDiscarded), HandDiscarded);
-        _connection.On<CardsSelectedMessage>(nameof(CardsSelected), CardsSelected);
-        _connection.On<PlayerJoinedMessage>(nameof(PlayerJoined), PlayerJoined);
-        _connection.On<RoundStartedMessage>(nameof(RoundStarted), RoundStarted);
-        _connection.On<RevealCardsMessage>(nameof(RevealCards), RevealCards);
-        _connection.On<GameEndedMessage>(nameof(GameEnded), GameEnded);
-        _connection.On<HandSetMessage>(nameof(HandSet), HandSet);
-        _connection.On<string>(nameof(Error), Error);
+        //_connection.On<WaitingForPlayersMessage>(nameof(WaitingForPlayers), WaitingForPlayers);
+        //_connection.On<PlayerLeftQueueMessage>(nameof(PlayerLeftQueue), PlayerLeftQueue);
+        //_connection.On<PlayerLeftGameMessage>(nameof(PlayerLeftGame), PlayerLeftGame);
+        //_connection.On<WinnerSelectedMessage>(nameof(WinnerSelected), WinnerSelected);
+        //_connection.On<HandDiscardedMessage>(nameof(HandDiscarded), HandDiscarded);
+        //_connection.On<CardsSelectedMessage>(nameof(CardsSelected), CardsSelected);
+        //_connection.On<PlayerJoinedMessage>(nameof(PlayerJoined), PlayerJoined);
+        //_connection.On<RoundStartedMessage>(nameof(RoundStarted), RoundStarted);
+        //_connection.On<RevealCardsMessage>(nameof(RevealCards), RevealCards);
+        //_connection.On<GameEndedMessage>(nameof(GameEnded), GameEnded);
+        //_connection.On<HandSetMessage>(nameof(HandSet), HandSet);
+        //_connection.On<string>(nameof(Error), Error);
         //_connection.Reconnected += (id) => { PlayerId = id!; return Task.CompletedTask; };
     }
 

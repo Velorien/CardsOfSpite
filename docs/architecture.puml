@@ -1,0 +1,33 @@
+@startuml Cards of Spite Architecture
+
+title Cards of Spite
+
+skinparam ComponentStyle rectangle
+
+frame Api {
+    component "SignalR hub" as hub
+    component "Game api" as api
+    component "Stream listener" as listener
+}
+
+frame Silo {
+    component "Game grain" as gameGrain
+    component "Deck grain" as deckGrain
+    queue "Orleans stream" as stream
+}
+
+frame Web {
+    component "Game configuration" as gameConfig
+    component "Game service" as gameService
+}
+
+gameConfig -left-> api : Create game
+api --> gameGrain : Initialize game grain
+gameGrain -> deckGrain : Get deck data
+gameGrain -> stream : Send events
+gameService <--> hub : Two way communication
+hub --> gameGrain : Invoke game grain
+stream --> listener : Relay game events
+listener -> hub : Invoke client methods
+
+@enduml

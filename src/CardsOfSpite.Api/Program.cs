@@ -3,22 +3,26 @@ using CardsOfSpite.Api.Hubs;
 using CardsOfSpite.Api.Routes;
 using CardsOfSpite.Api.Services;
 using Microsoft.AspNetCore.ResponseCompression;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
 builder.Services.AddSingleton<ClusterClientService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<ClusterClientService>());
 builder.Services.AddSingleton(sp => sp.GetRequiredService<ClusterClientService>().ClusterClient);
 builder.Services.AddSingleton<MessageStreamListener>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<MessageStreamListener>());
 builder.Services.AddSignalR();
+builder.Host.UseSerilog((ctx, log) =>
+{
+    log.Enrich.FromLogContext()
+       .WriteTo.Console()
+       .ReadFrom.Configuration(ctx.Configuration, "Serilog");
+});
+
 builder.Services.AddResponseCompression(o =>
 {
     o.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[] { "application/octet-stream" });
@@ -43,8 +47,8 @@ app.UseCors(builder => builder
     .AllowAnyOrigin()
     .AllowAnyMethod());
 
-app.UseAuthorization();
 app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
@@ -56,5 +60,7 @@ app.UseEndpoints(endpoints =>
     endpoints.MapHub<GameHub>("/gamehub");
     endpoints.MapFallbackToFile("index.html");
 });
+
+Log.Information("Cards of Spite API starting");
 
 app.Run();

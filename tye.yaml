@@ -1,0 +1,31 @@
+# tye application configuration file
+# read all about it at https://github.com/dotnet/tye
+#
+# when you've given us a try, we'd love to know what you think:
+#    https://aka.ms/AA7q20u
+#
+
+name: cardsofspite
+registry: localhost:6000
+ingress:
+  - name: ingress
+    bindings:
+      - port: 5001
+    rules:
+      - service: cardsofspite-web
+services:
+  - name: cardsofspite-web
+    project: src/CardsOfSpite.Api/CardsOfSpite.Api.csproj
+    bindings:
+      - port: 5001
+    env:
+      - name: AZURITE_HOST
+        value: AZURITE
+  - name: cardsofspite-silo
+    replicas: 2
+    project: src/CardsOfSpite.Silo/CardsOfSpite.Silo.csproj
+    env:
+      - name: AZURITE_HOST
+        value: AZURITE
+  - name: azurite
+    image: mcr.microsoft.com/azure-storage/azurite

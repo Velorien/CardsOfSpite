@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cardsofspite-silo
+  namespace: cardsofspite
+spec:
+  selector:
+    matchLabels:
+      app: cardsofspite-silo
+  template:
+    metadata:
+      labels:
+        app: cardsofspite-silo
+    spec:
+      containers:
+        - name: cardsofspite-silo
+          image: localhost:6000/cardsofspite-silo:1.0.0
+          env:
+            - name: AZURITE_HOST
+              value: cardsofspite-azurite-service
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+          ports:
+            - containerPort: 11111
+            - containerPort: 30000
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: cardsofspite-silo-service
+  namespace: cardsofspite
+spec:
+  selector:
+    app: cardsofspite-silo
+  ports:
+  - name: silo-port
+    port: 11111
+    targetPort: 11111
+  - name: gateway-port
+    port: 30000
+    targetPort: 30000
+
+---
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: cardsofspite-silo-autoscaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: cardsofspite-silo
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 70

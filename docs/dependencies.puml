@@ -1,0 +1,25 @@
+@startuml Dependency graph
+
+!theme plain
+skinparam ComponentStyle rectangle
+left to right direction
+
+' Projects
+[CardsOfSpite.Web] #ecf0f1
+[CardsOfSpite.GrainInterfaces] #ecf0f1
+[CardsOfSpite.Grains] #ecf0f1
+[CardsOfSpite.Silo] #ecf0f1
+[CardsOfSpite.Models] #ecf0f1
+[CardsOfSpite.Api] #ecf0f1
+[CardsOfSpite.HubClient] #ecf0f1
+
+CardsOfSpite.Web --> CardsOfSpite.HubClient
+CardsOfSpite.GrainInterfaces --> CardsOfSpite.Models
+CardsOfSpite.Grains --> CardsOfSpite.GrainInterfaces
+CardsOfSpite.Silo --> CardsOfSpite.GrainInterfaces
+CardsOfSpite.Silo --> CardsOfSpite.Grains
+CardsOfSpite.Api --> CardsOfSpite.GrainInterfaces
+CardsOfSpite.Api --> CardsOfSpite.HubClient
+CardsOfSpite.Api --> CardsOfSpite.Web
+CardsOfSpite.HubClient --> CardsOfSpite.Models
+@enduml
