@@ -16,8 +16,8 @@ spec:
         - name: cardsofspite-silo
           image: localhost:6000/cardsofspite-silo:1.0.0
           env:
-            - name: AZURITE_HOST
-              value: cardsofspite-azurite-service
+            - name: POSTGRES_CONNECTION_STRING
+              value: User ID=postgres;Password=SuperSecretPassword;Host=cardsofspite-postgres-service;Port=5432;Database=postgres;
           resources:
             limits:
               memory: "128Mi"

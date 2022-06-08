@@ -1,6 +1,5 @@
 ﻿using CardsOfSpite.GrainInterfaces;
 using Orleans;
-using Orleans.Clustering.AzureStorage;
 using Orleans.Configuration;
 using Orleans.Hosting;
 
@@ -16,12 +15,13 @@ class ClusterClientService : IHostedService
     {
         _logger = logger;
 
-        var azuriteHost = Environment.GetEnvironmentVariable("AZURITE_HOST") ?? "127.0.0.1";
-        var connectionString = @$"UseDevelopmentStorage=true;DevelopmentStorageProxyUri=http://{azuriteHost}";
+        var connectionString = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING");
 
         ClusterClient = new ClientBuilder()
-        .UseAzureStorageClustering((AzureStorageGatewayOptions o) => {
-            o.ConfigureTableServiceClient(connectionString);
+        .UseAdoNetClustering((AdoNetClusteringClientOptions options) =>
+        {
+            options.Invariant = "Npgsql";
+            options.ConnectionString = connectionString;
         })
         .Configure<ClusterOptions>(options =>
         {
@@ -35,8 +35,9 @@ class ClusterClientService : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        await ClusterClient.Connect(async e => {
-            _logger.LogInformation("Attempting to connect to orleans cluter");
+        await ClusterClient.Connect(async e =>
+        {
+            _logger.LogWarning(e, "Attempt to connect to orleans cluter failed");
             await Task.Delay(1000);
             return true;
         });

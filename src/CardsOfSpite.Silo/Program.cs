@@ -5,20 +5,18 @@ using Orleans;
 using Orleans.Hosting;
 using Serilog;
 using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json;
-using Orleans.Clustering.AzureStorage;
 
+var connectionString = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING");
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .WriteTo.Console()
+    .WriteTo.PostgreSQL(connectionString, "logs", needAutoCreateTable: true)
     .CreateLogger();
 
 var host = Host
     .CreateDefaultBuilder(args)
     .UseOrleans(silo =>
     {
-        var azuriteHost = Environment.GetEnvironmentVariable("AZURITE_HOST") ?? "127.0.0.1";
-        var connectionString = @$"UseDevelopmentStorage=true;DevelopmentStorageProxyUri=http://{azuriteHost}";
 
         silo.Configure<ClusterOptions>(o =>
             {
@@ -29,20 +27,23 @@ var host = Host
                 parts => parts
                     .AddApplicationPart(typeof(GrainManifest).Assembly)
                     .WithReferences())
-            .UseAzureStorageClustering((AzureStorageClusteringOptions o) => {
-                o.ConfigureTableServiceClient(connectionString);
+            .UseAdoNetClustering((AdoNetClusteringSiloOptions options) =>
+            {
+                options.Invariant = "Npgsql";
+                options.ConnectionString = connectionString;
             })
             .ConfigureEndpoints(siloPort: 11111, gatewayPort: 30000)
             .AddSimpleMessageStreamProvider("SMS")
             .AddMemoryGrainStorage("PubSubStore")
-            .AddAzureBlobGrainStorageAsDefault(o =>
+            .AddAdoNetGrainStorageAsDefault((AdoNetGrainStorageOptions options) =>
             {
-                o.UseJson = true;
-                o.ConfigureBlobServiceClient(connectionString);
-                o.ConfigureJsonSerializerSettings = serializer =>
-                {
-                    serializer.TypeNameHandling = TypeNameHandling.None;
-                };
+                options.Invariant = "Npgsql";
+                options.ConnectionString = connectionString;
+                options.UseFullAssemblyNames = false;
+                options.TypeNameHandling = Newtonsoft.Json.TypeNameHandling.None;
+                options.UseJsonFormat = true;
+                options.IndentJson = true;
+                options.UseFullAssemblyNames = false;
             });
     })
     .ConfigureLogging(log => log.AddSerilog(dispose: true))

@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cardsofspite-postgres
+  namespace: cardsofspite
+spec:
+  selector:
+    matchLabels:
+      app: cardsofspite-postgres
+  template:
+    metadata:
+      labels:
+        app: cardsofspite-postgres
+    spec:
+      containers:
+      - name: cardsofspite-postgres
+        image: postgres
+        env:
+          - name: POSTGRES_PASSWORD
+            value: SuperSecretPassword
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        ports:
+        - containerPort: 5432
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: cardsofspite-postgres-service
+  namespace: cardsofspite
+spec:
+  selector:
+    app: cardsofspite-postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: cardsofspite-postgres-nodeport
+  namespace: cardsofspite
+spec:
+  selector:
+    app: cardsofspite-postgres
+  type: NodePort
+  ports:
+  - port: 5432
+    nodePort: 30002

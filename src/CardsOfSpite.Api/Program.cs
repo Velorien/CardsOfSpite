@@ -20,6 +20,7 @@ builder.Host.UseSerilog((ctx, log) =>
 {
     log.Enrich.FromLogContext()
        .WriteTo.Console()
+       .WriteTo.PostgreSQL(Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING"), "logs", needAutoCreateTable: true)
        .ReadFrom.Configuration(ctx.Configuration, "Serilog");
 });
 

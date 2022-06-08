@@ -16,8 +16,8 @@ spec:
         - name: cardsofspite-api
           image: localhost:6000/cardsofspite-api:1.0.0
           env:
-            - name: AZURITE_HOST
-              value: cardsofspite-azurite-service
+            - name: POSTGRES_CONNECTION_STRING
+              value: User ID=postgres;Password=SuperSecretPassword;Host=cardsofspite-postgres-service;Port=5432;Database=postgres;
             - name: ApiKeyOptions__ApiKey
               value: 60A5D3E4100FE8AFA5EE0103739A45711D50D7F3BA7280D8A95B51F5D04AA4B8
           resources:
