@@ -5,7 +5,8 @@
       "commandName": "Project",
       "launchUrl": "swagger",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "POSTGRES_CONNECTION_STRING": "User ID=postgres;Password=SuperSecretPassword;Host=localhost;Port=30002;Database=postgres;"
       },
       "applicationUrl": "http://localhost:5001",
       "dotnetRunMessages": true

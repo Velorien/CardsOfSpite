@@ -1,7 +1,10 @@
 {
   "profiles": {
     "CardsOfSpite.Silo": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "environmentVariables": {
+        "POSTGRES_CONNECTION_STRING": "User ID=postgres;Password=SuperSecretPassword;Host=localhost;Port=30002;Database=postgres;"
+      }
     }
   }
 }
