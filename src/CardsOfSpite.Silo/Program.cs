@@ -27,6 +27,7 @@ var host = Host
                 parts => parts
                     .AddApplicationPart(typeof(GrainManifest).Assembly)
                     .WithReferences())
+            .UseDashboard(o => { })
             .UseAdoNetClustering((AdoNetClusteringSiloOptions options) =>
             {
                 options.Invariant = "Npgsql";
